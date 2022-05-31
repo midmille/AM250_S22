@@ -7,6 +7,7 @@ import subprocess
 import numpy as np
 import os
 import pickle
+import matplotlib.pyplot as plt
 
 
 def Run_Latency(Ns, in_file, out_file):
@@ -54,8 +55,43 @@ def Run_Latency(Ns, in_file, out_file):
 
     return time
 
+
+def Plot_Latency(Ns, save_file, N_loop): 
+    """
+    This loads the resulting time array from pickle, solves for the linear fit, and plots the 
+    result.
+
+    """
+
+    ## [load the time array.]
+    time = pickle.load(open(save_file, 'rb'))
+    ## [The time per message is the total time divided by 2*N_loop.]
+    time_msg = time / (2*N_loop)
+
+    ## [Linear rgression.]
+    m,b = np.polyfit(Ns, time_msg, 1)
+
+    ## [plotting the result.]
+    fig, ax = plt.subplots()
+    ## [plot the best fit line.]
+    x = np.linspace(0, Ns[-1], 100)
+    ax.plot(x, m*x +b, label = f'Best Fit Line: y = {m}x + {b}')
+    ax.plot(Ns, time_msg, 'ro', fillstyle='none', label = "MPI_WTIME Data")
+    ax.set_ylabel("Message Time [s]")
+    ax.set_xlabel("Message Size [N]")
+    ax.set_title("Latency Study")
+    ax.grid()
+    ax.legend()
+
+    fig.show()
+    
+    
 if __name__ == '__main__':
 
+    ## [Problem parameters.]
+    ## ---------------------
+    ## [The number of loops for the ping ponging]
+    N_loop = 10000 
     ## [The name of the file to save the time array into.]
     save_file = 'save_time.p'
     ## [The name of the input file.]
@@ -64,9 +100,19 @@ if __name__ == '__main__':
     out_file = 'output.txt'
     ## [The array of messages sizes to loop over.]
     Ns = np.arange(1, 110000, 10000)
+    ## [Set True to run mpi latency program.]
+    run = False
+    ## [Set True to plot figure from pickle file.]
+    plot = True
 
-    ## [Run the latency program for each message size and return the result.]
-    time = Run_Latency(Ns, in_file, out_file)
 
-    ## [Save the result.]
-    pickle.dump(time, open(save_file, 'wb'))
+    if run: 
+        ## [Run the latency program for each message size and return the result.]
+        time = Run_Latency(Ns, in_file, out_file)
+    
+        ## [Save the result.]
+        pickle.dump(time, open(save_file, 'wb'))
+
+    if plot: 
+        ## [Plot the resulting linear regression.]
+        Plot_Latency(Ns, save_file, N_loop)
