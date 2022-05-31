@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 mat_mul.f90 -o mat_mul -fopenmp
+
+TO RUN
+------
+    qsub mat_mul.cmd
+
+OUTPUT
+-----
+    cat mat_mul.o{jobid}
+    cat mat_mul.e{jobid}

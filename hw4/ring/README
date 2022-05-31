@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 ring.f90 -o ring
+
+TO RUN
+------
+    qsub ring.cmd
+
+OUTPUT
+-----
+    cat ring.o{jobid}
+    cat ring.e{jobid}

@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 ping_pong.f90 -o ping_pong
+
+TO RUN
+------
+    qsub ping_pong.cmd
+
+OUTPUT
+-----
+    cat ping_pong.o{jobid}
+    cat ping_pong.e{jobid}

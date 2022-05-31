@@ -1,0 +1,17 @@
+HOMEWORK 2 AM 250 SPRING 
+-------------------------
+
+Question 1
+----------
+
+    To Compile RUN : gfortran trap.f90 -o trap.exe
+
+    To Run RUN : ./trap.exe
+
+Question 2
+----------
+
+    To Compile RUN : gfortran ones.f90 -o ones.exe
+
+    To Run RUN : ./ones.exe
+

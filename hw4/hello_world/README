@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 hello_world.f90 -o hello_world 
+
+TO RUN
+------
+    qsub hello_world.cmd
+
+OUTPUT
+-----
+    cat hello_world.o{jobid}
+    cat hello_world.e{jobid}

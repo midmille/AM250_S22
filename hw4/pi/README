@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 pi.f90 -o pi
+
+TO RUN
+------
+    qsub pi.cmd
+
+OUTPUT
+-----
+    cat pi.o{jobid}
+    cat pi.e{jobid}

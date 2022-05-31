@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 latency.f90 -o latency
+
+TO RUN
+------
+    qsub latency.cmd
+
+OUTPUT
+-----
+    cat latency.o{jobid}
+    cat latency.e{jobid}

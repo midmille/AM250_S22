@@ -1,0 +1,12 @@
+TO COMPILE
+----------
+    mpif90 send_receive.f90 -o send_receive
+
+TO RUN
+------
+    qsub send_receive.cmd
+
+OUTPUT
+-----
+    cat send_receive.o{jobid}
+    cat send_receive.e{jobid}

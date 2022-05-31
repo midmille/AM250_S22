@@ -1,0 +1,10 @@
+ Parallel DO Loop Implementation:
+ --------------------------------
+ MIN:    449.83091818927454      ROW:          914 COL:         1035
+ 
+ Time Do Loop:    9.5299098156392574     
+ Work Share Implementation:
+ ---------------------------
+ MIN:    449.83091818927454      ROW:          914 COL:         1035
+ 
+ Time Work Share:    8.2680363161489367     
