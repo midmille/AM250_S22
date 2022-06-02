@@ -4,7 +4,29 @@ TO COMPILE
 
 TO RUN
 ------
-    qsub latency.cmd
+    sbatch latency.cmd
+
+TO RUN: Single Message Size
+-------
+    1) Edit 'input.txt' with desired integer message size.
+
+    2) run: mpirun -np latency
+
+TO RUN: Message Size Array
+-------
+    1) run: python run_latency.py
+            -- set flag run == True
+            -- Python shell script
+                -> Loops over array of message sizes
+                -> Edits input file
+                -> Runs 'mpirun -np 2 latency' using subprocess
+                -> Reads output file.
+                -> Saves output array.
+
+TO PLOT:
+-------
+    1) run: python run_latency.py
+        -- set flag plot == True
 
 OUTPUT
 -----
