@@ -98,7 +98,7 @@ CONTAINS
         A(3,2) = 1
         A(1,3) = 1
         A(2,3) = 1 
-        A(2,3) = 1
+        A(3,3) = 1
 
     END SUBROUTINE Init_Glide_Life
 
@@ -213,7 +213,7 @@ CONTAINS
         ! Returns
         ! -------
         ! [The evolved game of life matrix.]
-        integer, intent(inout)                   :: A(0:Nxp1, 0:Nyp1)
+        integer, intent(inout)                   :: A(0:Nyp1, 0:Nxp1)
         
         ! Variables
         ! ---------
@@ -256,11 +256,11 @@ CONTAINS
 
                 ! [Rules for alive or dead.]
                 IF (cnt .EQ. 3) THEN 
-                    Atmp = 1
+                    Atmp(i,j) = 1
                 ELSEIF (cnt .EQ. 2) THEN 
-                    Atmp = A(i,j)
+                    Atmp(i,j) = A(i,j)
                 ELSE
-                    Atmp = 0
+                    Atmp(i,j) = 0
                 ENDIF
             ENDDO
         ENDDO 

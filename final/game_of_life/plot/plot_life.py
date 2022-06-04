@@ -106,6 +106,7 @@ def Animate_Life(Nx, Ny, life_array, tstps):
     def animate(i): 
         ax.clear() 
         ax.imshow(life_array[:,:,i], extent=[0, Nx, 0, Ny], cmap='Blues')
+        ax.set_title(f't = {tstps[i]}')
         ax.set_xticks(np.arange(0, Nx), [])
         ax.set_yticks(np.arange(0, Ny), [])
         ax.grid(True, c='black')
@@ -113,7 +114,7 @@ def Animate_Life(Nx, Ny, life_array, tstps):
 
     fig, ax = plt.subplots()
     
-    ani = FuncAnimation(fig, animate, frames=frames, interval=500, repeat=True)
+    ani = FuncAnimation(fig, animate, frames=frames, interval=250, repeat=True)
     
     plt.show()
 
@@ -123,10 +124,10 @@ def Animate_Life(Nx, Ny, life_array, tstps):
 if __name__ == '__main__': 
     
     ## [Parameters from main.f90]
-    Nx = 10
-    Ny = 12
-    Nt = 20 
-    Nw = 5
+    Nx = 20
+    Ny = 20
+    Nt = 80
+    Nw = 1
     ## [The parallelkization flag.]
     pflag = 'serial'
     savefile_head = "life_out"
@@ -136,9 +137,6 @@ if __name__ == '__main__':
 
     ## [Read the output.]
     life_arr, tstps = Read_Output(Nx, Ny, Nt, Nw, savefile_head, outdir)
-
-    ## [Plot the life frame.]
-#    Plot_Life(Nx, Ny, life_arr, 0)
 
     ## [Animate fig.]
     Animate_Life(Nx, Ny, life_arr, tstps)

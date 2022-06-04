@@ -145,7 +145,7 @@ CONTAINS
                         CALL Write_Life_Step(k,                      &
                         &                    Nx,                     &
                         &                    Ny,                     &
-                        &                    A(1:Ny,1:Nx),           &
+                        &                    Ag(1:Ny,1:Nx),          &
                         &                    savefile_head,          &
                         &                    serial_outdir)
                     ENDIF 

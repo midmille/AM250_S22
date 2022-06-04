@@ -18,13 +18,13 @@ PROGRAM main
     ! [Double Precision for real numbers.]
     integer, parameter                 :: dp=kind(0.d0)
     ! [The size of the x-dimension, the number of columns.]
-    integer, parameter                 :: Nx = 10
+    integer, parameter                 :: Nx = 20
     ! [The size of the y-dimension, the number of rows.]
-    integer, parameter                 :: Ny = 12
+    integer, parameter                 :: Ny = 20
     ! [The number of time steps to take.]
-    integer, parameter                 :: Nt = 20
+    integer, parameter                 :: Nt = 80
     ! [The number of time steps between each gather and write.]
-    integer, parameter                 :: Nw = 5
+    integer, parameter                 :: Nw = 1
     ! [The parallelization flag, the options are, 
     !  'serial' : Runs the problem in series on master--No Parallel,
     !  'cols'   : Parallelizes the problem into column partitions, 
@@ -34,7 +34,7 @@ PROGRAM main
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
-    character(len=100), parameter      :: iflag = 'rand'
+    character(len=100), parameter      :: iflag = 'glide'
     ! [The write out put flag, boolean, options are, 
     !  .TRUE.  : Life Matrix Output is written to desginated file.
     !  .FALSE. : Life Mat no written, reasons might be for timing studies.]
