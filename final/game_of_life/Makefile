@@ -16,10 +16,7 @@ main.exe: $(OBJECTS)
 		mpif90 $(OBJECTS) -o main.exe
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.f90
-		mpif90 -c $< -o $@ -J $(OBJDIR)
-		
-#$(OBJDIR)/%.mod: $(SRCDIR)/%.f90
-#		gfortran -c $< -M $(OBJDIR)
+		mpif90 -c $< -o $@ -module $(OBJDIR)
 
 clean: 
 	rm -f $(OBJECTS) $(MODULES) main.exe

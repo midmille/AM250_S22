@@ -308,7 +308,10 @@ CONTAINS
 
         ! [Loop over the rows.]
         DO i=1,Ny
-            WRITE(10,*) (A(i,j), j=1,Nx)
+            DO j=1,Nx
+                WRITE(10,'(I2)', advance='no') A(i,j)
+            ENDDO
+            WRITE(10,*) ''
         ENDDO
 
         ! [Close file.]
@@ -364,6 +367,7 @@ CONTAINS
         ! [Concatinate the strings.]
         savefile = outdir // savefile_head // k_char // ".dat"
         
+        PRINT *, savefile
         ! [Write the matrix to the above file.]
         CALL Write_Life_Mat(savefile, Nx, Ny, A)
 

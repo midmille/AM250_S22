@@ -130,6 +130,8 @@ CONTAINS
             ! [Loop time.]
             DO k=1,Nt
 
+                PRINT *, k
+
                 ! [Update Ghost Cells in Ag.]
                 CALL UGN(Nx, Ny, Nxp1, Nyp1, Ag)
 

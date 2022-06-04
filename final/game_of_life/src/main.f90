@@ -18,9 +18,9 @@ PROGRAM main
     ! [Double Precision for real numbers.]
     integer, parameter                 :: dp=kind(0.d0)
     ! [The size of the x-dimension, the number of columns.]
-    integer, parameter                 :: Nx = 100
+    integer, parameter                 :: Nx = 10
     ! [The size of the y-dimension, the number of rows.]
-    integer, parameter                 :: Ny = 100
+    integer, parameter                 :: Ny = 12
     ! [The number of time steps to take.]
     integer, parameter                 :: Nt = 20
     ! [The number of time steps between each gather and write.]
@@ -30,7 +30,7 @@ PROGRAM main
     !  'cols'   : Parallelizes the problem into column partitions, 
     !  'rows'   : Parallelizes the problem into rows paritions,
     !  'tile'   : Parallelizes the problem into rectangular tile partitions.]
-    character(len=100), parameter      :: pflag = "cols"
+    character(len=100), parameter      :: pflag = "serial"
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
@@ -41,11 +41,11 @@ PROGRAM main
     logical, parameter                 :: woflag = .TRUE.
     ! [The header of the save file, format will be '{savefile_head}_{k}.dat'
     !  where k is the given time step for the save.]
-    character(len=100), parameter      :: savefile_head = "life_out"
+    character(len=8), parameter        :: savefile_head = "life_out"
     ! [The out directory for the serial implementation.]
-    character(len=100), parameter      :: serial_outdir = "output/serial_out/"
+    character(len=18), parameter       :: serial_outdir = "output/serial_out/"
     ! [The out directory for the column parallelization.]
-    character(len=100), parameter      :: cols_outdir = "output/cols_out/"
+    character(len=16), parameter       :: cols_outdir = "output/cols_out/"
 
     ! Problem Variables
     ! -----------------
@@ -89,7 +89,7 @@ PROGRAM main
     ! [BARRIER??????
 
     ! [Run the life model for given parallelization flag.]
-    IF (pflag .EQ. 'none') THEN  
+    IF (pflag .EQ. 'serial') THEN  
         CALL Run_Serial_Life(pid,                                    &
         &                    master,                                 & 
         &                    Nx,                                     & 
