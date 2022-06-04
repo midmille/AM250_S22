@@ -1,8 +1,14 @@
+! AM250_S22/final/game_of_life/src/serial_mod.f90
+! Author : Miles D. Miller, University of California Santa Cruz
+! Created : 4:20 PM, June 3, 2022
+! About : This is the module for the implementation of the game of life in
+!         serial.
+
 MODULE serial_mod
 
     USE mpi
     
-    USE funcs_mod, ONLY: Init_Life
+    USE funcs_mod, ONLY: Life, Write_Life_Step
     
     implicit none
 
@@ -55,41 +61,6 @@ CONTAINS
 
 
     !------------------------------------------------------------
-    SUBROUTINE Write_Life_Step(k,                               & 
-    &                          Nx,                              & 
-    &                          Ny,                              & 
-    &                          A,                               & 
-    &                          savefile_head,                   &
-    &                          outdir)
-    !------------------------------------------------------------
-        ! This algorithm writes the matrix A to file for the current
-        ! time step.
-
-        ! Parameters
-        ! ----------
-        ! [The current time step.] 
-        integer, intent(in)                  :: k 
-        ! [The number of columns.]
-        integer, intent(in)                  :: Nx
-        ! [The number of rows.]
-        integer, intent(in)                  :: Ny
-        ! [The matrix at step k.]
-        integer, intent(in)                  :: A(Ny, Nx)
-        ! [The savefile header.] 
-        integer
-
-        ! Returns
-        ! -------
-        ! 
-
-        ! Variables
-        ! ---------
-        ! 
-
-
-
-
-    !------------------------------------------------------------
     SUBROUTINE Run_Serial_Life(pid,                             &
     &                          master,                          & 
     &                          Nx,                              & 
@@ -101,7 +72,7 @@ CONTAINS
     &                          A,                               &
     &                          savefile_head,                   &
     &                          serial_outdir,                   & 
-    &                          wo,                              &
+    &                          woflag,                          &
     !                          [OUTPUT]                         !
     &                          t)
     !------------------------------------------------------------
@@ -127,7 +98,7 @@ CONTAINS
         ! [The serial output directory.]
         character(len=*), intent(in)         :: serial_outdir
         ! [The write output flag.]
-        logical, intent(in)                  :: wo
+        logical, intent(in)                  :: woflag
 
         ! Returns
         ! -------
@@ -142,6 +113,8 @@ CONTAINS
         ! [Time indexing.]
         integer                              :: k
 
+        !!!!!! TEMP !!!!!
+        t = 0
 
         ! ROUTINE START
         ! =============
@@ -164,15 +137,18 @@ CONTAINS
                 CALL Life(Nxp1, Nyp1, Ag)  
 
                 ! [If the write output flag is true.]
-                IF (wo .EQ. .TRUE.) THEN 
+                IF (woflag .EQ. .TRUE.) THEN 
                     ! [Write first step and the output every Nw time step.]
-                    IF (k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0) THEN 
-                        CALL Write_Step()
+                    IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
+                        CALL Write_Life_Step(k,                      &
+                        &                    Nx,                     &
+                        &                    Ny,                     &
+                        &                    A(1:Ny,1:Nx),           &
+                        &                    savefile_head,          &
+                        &                    serial_outdir)
                     ENDIF 
                 ENDIF
-
             ENDDO
-
         ENDIF 
 
 

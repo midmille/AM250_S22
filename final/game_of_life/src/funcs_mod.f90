@@ -124,7 +124,7 @@ CONTAINS
         ! [The master id.]
         integer, intent(in)                      :: master
         ! [The initialization flag.]
-        character(len=100)                       :: iflag
+        character(len=*)                         :: iflag
         ! [The x-dimension.]
         integer                                  :: Nx
         ! [The y-dimension.]
@@ -137,25 +137,63 @@ CONTAINS
 
         ! Variables
         ! ---------
+        ! None
     
         ! ROUTINE START
         ! =============
      
-        ! [Allocate A.]
-        ALLOCATE(A(Ny, Nx))
-        A = 0
+        IF (pid .EQ. master) THEN 
+            ! [Allocate A.]
+            ALLOCATE(A(Ny, Nx))
+            A = 0
 
-        ! [Initialize A according to the iflag.]
-        IF (iflag .EQ. 'rand') THEN 
-            PRINT *, "Initilizing Game of Life, initialization: Random"
-            CALL Init_Rand_Life()
-        ELSE IF (iflag .EQ. 'glide') THEN 
-            PRINT *, "Initilizing Game of Life, initialization: Glider"
-            CALL Init_Glide_Life()
+            ! [Initialize A according to the iflag.]
+            IF (iflag .EQ. 'rand') THEN 
+                PRINT *, "Initilizing Game of Life, initialization: Random"
+                CALL Init_Rand_Life(Nx, Ny, A)
+            ELSE IF (iflag .EQ. 'glide') THEN 
+                PRINT *, "Initilizing Game of Life, initialization: Glider"
+                CALL Init_Glide_Life(Nx, Ny, A)
+            ENDIF
+        ENDIF
 
     END SUBROUTINE Init_Life
     
 
+    !-----------------------------------------------------------------
+    SUBROUTINE End_Life(pid,                                         &
+    &                   master,                                      & 
+    &                   A) 
+    !-----------------------------------------------------------------
+    
+        ! This routine is for the initialization of the life matrix on 
+        ! the master processor. 
+        ! The routine allocates the array, initilizes its state accoriding to 
+        ! The designation of iflag, and then returns the initialized A.
+ 
+        ! Parameters
+        ! ----------
+        ! [The processdor id.]
+        integer, intent(in)                      :: pid
+        ! [The master id.]
+        integer, intent(in)                      :: master
+        ! [The allocatable parent life domain matrix.]
+        integer, allocatable, intent(inout)      :: A(:,:)
+
+        ! Variables
+        ! ---------
+        ! None
+    
+        ! ROUTINE START
+        ! =============
+     
+        IF (pid .EQ. master) THEN
+            DEALLOCATE(A)
+        ENDIF
+
+    END SUBROUTINE End_Life
+
+ 
     !-----------------------------------------------------------------
     SUBROUTINE Life(Nxp1,                                            &
     &               Nyp1,                                            &
@@ -197,9 +235,9 @@ CONTAINS
 
         ! [Set the loop start and stop variables.]
         istr = 1
-        istp = Np1 - 1
+        istp = Nyp1 - 1
         jstr = 1
-        jstp = Np1 - 1
+        jstp = Nxp1 - 1
 
         ! [Loop over the entries of the provided matrix.]
         DO j=jstr,jstp
@@ -223,6 +261,7 @@ CONTAINS
                     Atmp = A(i,j)
                 ELSE
                     Atmp = 0
+                ENDIF
             ENDDO
         ENDDO 
 
@@ -261,6 +300,9 @@ CONTAINS
         ! Indexing
         integer                                  :: i,j
 
+        ! ROUTINE START
+        ! =============
+        
         ! [Open the file with tag=10.]
         OPEN(10, file=filename)
 
@@ -273,6 +315,59 @@ CONTAINS
         CLOSE(10)
 
     END SUBROUTINE Write_Life_Mat
+
+
+    !------------------------------------------------------------
+    SUBROUTINE Write_Life_Step(k,                               & 
+    &                          Nx,                              & 
+    &                          Ny,                              & 
+    &                          A,                               & 
+    &                          savefile_head,                   &
+    &                          outdir)
+    !------------------------------------------------------------
+        ! This algorithm writes the matrix A to file for the current
+        ! time step.
+
+        ! Parameters
+        ! ----------
+        ! [The current time step.] 
+        integer, intent(in)                      :: k 
+        ! [The number of columns.]
+        integer, intent(in)                      :: Nx
+        ! [The number of rows.]
+        integer, intent(in)                      :: Ny
+        ! [The matrix at step k.]
+        integer, intent(in)                      :: A(Ny, Nx)
+        ! [The savefile header.] 
+        character(len=*), intent(in)             :: savefile_head
+        ! [The output directory for the parallelization method.]
+        character(len=*), intent(in)             :: outdir
+
+        ! Returns
+        ! -------
+        ! None
+
+        ! Variables
+        ! ---------
+        ! [The character variable for k.]
+        character(len=6)                         :: k_char
+        ! [The savefile name.]
+        character(len=100)                       :: savefile
+
+
+        ! ROUTINE START
+        ! =============
+
+        ! [Form the savefile name for the given time step.]
+        ! [Write the step index into a character.]
+        WRITE(k_char, '(I6)'), 100000 + k
+        ! [Concatinate the strings.]
+        savefile = outdir // savefile_head // k_char // ".dat"
+        
+        ! [Write the matrix to the above file.]
+        CALL Write_Life_Mat(savefile, Nx, Ny, A)
+
+    END SUBROUTINE Write_Life_Step
 
 
 END MODULE funcs_mod

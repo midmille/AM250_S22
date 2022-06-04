@@ -1,11 +1,15 @@
-! This program is the main driver routine for the game of life.
+! AM250_S22/final/game_of_life/src/main.f90
+! Author : Miles D. Miller, University of California Santa Cruz
+! Created : 12:30 PM, June 3, 2022
+! About : This is the main driver program for the game of life final 
+!         project for AM 250. 
 
 PROGRAM main
 
     USE mpi
 
-    USE funcs_mod, ONLY: Print_Thing1
-    USE parallel_cols_mod, ONLY: Print_Thing2
+    USE funcs_mod, ONLY: Init_Life, End_Life
+    USE serial_mod, ONLY: Run_Serial_Life
 
     implicit none
     
@@ -31,6 +35,10 @@ PROGRAM main
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
     character(len=100), parameter      :: iflag = 'rand'
+    ! [The write out put flag, boolean, options are, 
+    !  .TRUE.  : Life Matrix Output is written to desginated file.
+    !  .FALSE. : Life Mat no written, reasons might be for timing studies.]
+    logical, parameter                 :: woflag = .TRUE.
     ! [The header of the save file, format will be '{savefile_head}_{k}.dat'
     !  where k is the given time step for the save.]
     character(len=100), parameter      :: savefile_head = "life_out"
@@ -46,8 +54,8 @@ PROGRAM main
     ! [The Nx plus one and Ny plus one variables.]
     integer                            :: Nxp1 = Nx+1
     integer                            :: Nyp1 = Ny+1
-
-
+    ! [The time elapsed for given implementation.]
+    real (dp)                          :: t
 
     ! MPI Parameters
     ! --------------
@@ -76,23 +84,37 @@ PROGRAM main
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
 
     ! [This creates and allocates the parent matrix on master processor.]
-    CALL Init_Life()
+    CALL Init_Life(pid, master, iflag, Nx, Ny, A)
 
     ! [BARRIER??????
 
     ! [Run the life model for given parallelization flag.]
     IF (pflag .EQ. 'none') THEN  
-        CALL Run_Serial_Life()
-    ELSE IF (pflag .EQ. 'cols') THEN 
-        CALL Run_Column_Life()
-    ELSE IF (pflag .EQ. 'rows') THEN 
-        CALL Run_Row_Life()
-    ELSE IF (pflag .EQ. 'tile') THEN
-        CALL Run_Tile_Life()
+        CALL Run_Serial_Life(pid,                                    &
+        &                    master,                                 & 
+        &                    Nx,                                     & 
+        &                    Ny,                                     &
+        &                    Nt,                                     &
+        &                    Nw,                                     & 
+        &                    Nxp1,                                   &
+        &                    Nyp1,                                   & 
+        &                    A,                                      &
+        &                    savefile_head,                          &
+        &                    serial_outdir,                          & 
+        &                    woflag,                                 &
+        !                    [OUTPUT]                                !
+        &                    t)
+ 
+!    ELSE IF (pflag .EQ. 'cols') THEN 
+!        CALL Run_Column_Life()
+!    ELSE IF (pflag .EQ. 'rows') THEN 
+!        CALL Run_Row_Life()
+!    ELSE IF (pflag .EQ. 'tile') THEN
+!        CALL Run_Tile_Life()
     END IF
 
     ! [This deallocates the matrix A on master.]
-    CALL End_Life()
+    CALL End_Life(pid, master, A)
 
     ! [Terminate MPI.]
     CALL MPI_FINALIZE(ierr)
