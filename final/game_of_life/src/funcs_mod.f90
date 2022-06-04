@@ -157,9 +157,122 @@ CONTAINS
     
 
     !-----------------------------------------------------------------
-    SUBROUTINE Life(Nx,                                              &
-    &               Ny,                                              &
+    SUBROUTINE Life(Nxp1,                                            &
+    &               Nyp1,                                            &
     &               A)                                            
     !-----------------------------------------------------------------
+        ! This routine performs the game of life algorithm on the provided 
+        ! initialized matrix. 
+        ! This algorithm assumes that ghost noes are already in play.
+
+        ! Parameters
+        ! ----------
+        ! [The interior y-dim plus one..]
+        integer, intent(in)                      :: Nxp1
+        ! [The interior y-dim plus one.]
+        integer, intent(in)                      :: Nyp1
+        
+        ! Returns
+        ! -------
+        ! [The evolved game of life matrix.]
+        integer, intent(inout)                   :: A(0:Nxp1, 0:Nyp1)
+        
+        ! Variables
+        ! ---------
+        ! [The temporary A, such that we don't overwrite cells.]
+        integer                                  :: Atmp(0:Nyp1, 0:Nxp1)
+        ! [The count of alive cells.]
+        integer                                  :: cnt
+        ! [Indexing.]
+        integer                                  :: i,j
+        ! [The start and stop of the  i and j loops.]
+        integer                                  :: istr, istp
+        integer                                  :: jstr, jstp
+
+        ! ROUTINE START
+        ! =============
+         
+        ! [Init Atmp as zeros.]
+        Atmp = 0
+
+        ! [Set the loop start and stop variables.]
+        istr = 1
+        istp = Np1 - 1
+        jstr = 1
+        jstp = Np1 - 1
+
+        ! [Loop over the entries of the provided matrix.]
+        DO j=jstr,jstp
+            DO i=istr, istp
+                ! [Init the cnt to 0.]
+                cnt = 0
+                ! [Count the alive cells by wrapping around the given point.]
+                cnt = cnt + A(i+1, j-1)
+                cnt = cnt + A(i+1, j)
+                cnt = cnt + A(i+1, j+1)
+                cnt = cnt + A(i, j+1)
+                cnt = cnt + A(i-1, j+1)
+                cnt = cnt + A(i-1, j)
+                cnt = cnt + A(i-1, j-1)
+                cnt = cnt + A(i, j-1)
+
+                ! [Rules for alive or dead.]
+                IF (cnt .EQ. 3) THEN 
+                    Atmp = 1
+                ELSEIF (cnt .EQ. 2) THEN 
+                    Atmp = A(i,j)
+                ELSE
+                    Atmp = 0
+            ENDDO
+        ENDDO 
+
+        ! [Overwrite A as the new evolved A.]
+        A = Atmp
+    
+    END SUBROUTINE Life
+
+
+    !----------------------------------------------------------------
+    SUBROUTINE Write_Life_Mat(filename,                             &
+    &                         Nx,                                   &
+    &                         Ny,                                   & 
+    &                         A)
+    !----------------------------------------------------------------
+        ! This routine write the provided matrix to the designated 
+        ! file.
+
+        ! Parameters
+        ! ----------
+        ! [The name of the file to write the matrix to.]
+        character(len=*), intent(in)             :: filename
+        ! [The number of columns.]
+        integer, intent(in)                      :: Nx
+        ! [The number of rows.]
+        integer, intent(in)                      :: Ny
+        ! [The matrix to write.]
+        integer, intent(in)                      :: A(Ny, Nx)
+
+        ! Returns
+        ! -------
+        ! None
+
+        ! Variables
+        ! ---------
+        ! Indexing
+        integer                                  :: i,j
+
+        ! [Open the file with tag=10.]
+        OPEN(10, file=filename)
+
+        ! [Loop over the rows.]
+        DO i=1,Ny
+            WRITE(10,*) (A(i,j), j=1,Nx)
+        ENDDO
+
+        ! [Close file.]
+        CLOSE(10)
+
+    END SUBROUTINE Write_Life_Mat
+
 
 END MODULE funcs_mod

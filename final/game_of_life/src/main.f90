@@ -43,6 +43,10 @@ PROGRAM main
     ! -----------------
     ! [The parent matrix, the entire domain.]
     integer, allocatable               :: A(:,:)
+    ! [The Nx plus one and Ny plus one variables.]
+    integer                            :: Nxp1 = Nx+1
+    integer                            :: Nyp1 = Ny+1
+
 
 
     ! MPI Parameters
