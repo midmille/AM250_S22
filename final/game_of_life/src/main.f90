@@ -10,6 +10,7 @@ PROGRAM main
 
     USE funcs_mod, ONLY: Init_Life, End_Life
     USE serial_mod, ONLY: Run_Serial_Life
+    USE cols_mod, ONLY: Run_Column_Life
 
     implicit none
     
@@ -18,9 +19,9 @@ PROGRAM main
     ! [Double Precision for real numbers.]
     integer, parameter                 :: dp=kind(0.d0)
     ! [The size of the x-dimension, the number of columns.]
-    integer, parameter                 :: Nx = 20
+    integer, parameter                 :: Nx = 10
     ! [The size of the y-dimension, the number of rows.]
-    integer, parameter                 :: Ny = 20
+    integer, parameter                 :: Ny = 10
     ! [The number of time steps to take.]
     integer, parameter                 :: Nt = 80
     ! [The number of time steps between each gather and write.]
@@ -30,7 +31,7 @@ PROGRAM main
     !  'cols'   : Parallelizes the problem into column partitions, 
     !  'rows'   : Parallelizes the problem into rows paritions,
     !  'tile'   : Parallelizes the problem into rectangular tile partitions.]
-    character(len=100), parameter      :: pflag = "serial"
+    character(len=100), parameter      :: pflag = "cols"
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
@@ -69,7 +70,7 @@ PROGRAM main
     ! [The processor id.]
     integer                            :: pid
     ! [The total number of available processors.]
-    integer                            :: numprocs
+    integer                            :: Np
 
 
 
@@ -81,7 +82,7 @@ PROGRAM main
     ! [ID of current processor.]
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, pid, ierr)
     ! [The number of processors.]
-    CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+    CALL MPI_COMM_SIZE(MPI_COMM_WORLD, Np, ierr)
 
     ! [This creates and allocates the parent matrix on master processor.]
     CALL Init_Life(pid, master, iflag, Nx, Ny, A)
@@ -90,6 +91,7 @@ PROGRAM main
 
     ! [Run the life model for given parallelization flag.]
     IF (pflag .EQ. 'serial') THEN  
+        PRINT *, "Running Game of Life in series..."
         CALL Run_Serial_Life(pid,                                    &
         &                    master,                                 & 
         &                    Nx,                                     & 
@@ -105,8 +107,23 @@ PROGRAM main
         !                    [OUTPUT]                                !
         &                    t)
  
-!    ELSE IF (pflag .EQ. 'cols') THEN 
-!        CALL Run_Column_Life()
+    ! [Run the life model for column paralleization.]
+    ELSE IF (pflag .EQ. 'cols') THEN 
+        PRINT *, "Running Game of Life in parallel: Column Partitions"
+        CALL Run_Column_Life(pid,                                    &
+        &                    master,                                 &
+        &                    Np,                                     &
+        &                    Nx,                                     &
+        &                    Ny,                                     &
+        &                    Nt,                                     &   
+        &                    Nw,                                     &
+        &                    A,                                      &
+        &                    savefile_head,                          &
+        &                    cols_outdir,                            &
+        &                    woflag,                                 &
+        !                    [OUTPUT]                                ! 
+        &                    t)
+ 
 !    ELSE IF (pflag .EQ. 'rows') THEN 
 !        CALL Run_Row_Life()
 !    ELSE IF (pflag .EQ. 'tile') THEN

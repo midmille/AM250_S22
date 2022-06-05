@@ -130,14 +130,6 @@ CONTAINS
             ! [Loop time.]
             DO k=1,Nt
 
-                PRINT *, k
-
-                ! [Update Ghost Cells in Ag.]
-                CALL UGN(Nx, Ny, Nxp1, Nyp1, Ag)
-
-                ! [Run Life.]
-                CALL Life(Nxp1, Nyp1, Ag)  
-
                 ! [If the write output flag is true.]
                 IF (woflag .EQ. .TRUE.) THEN 
                     ! [Write first step and the output every Nw time step.]
@@ -150,6 +142,13 @@ CONTAINS
                         &                    serial_outdir)
                     ENDIF 
                 ENDIF
+ 
+                ! [Update Ghost Cells in Ag.]
+                CALL UGN(Nx, Ny, Nxp1, Nyp1, Ag)
+
+                ! [Run Life.]
+                CALL Life(Nxp1, Nyp1, Ag)  
+
             ENDDO
         ENDIF 
 

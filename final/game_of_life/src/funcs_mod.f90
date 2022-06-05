@@ -142,7 +142,7 @@ CONTAINS
         ! ROUTINE START
         ! =============
      
-        IF (pid .EQ. master) THEN 
+!        IF (pid .EQ. master) THEN 
             ! [Allocate A.]
             ALLOCATE(A(Ny, Nx))
             A = 0
@@ -155,7 +155,7 @@ CONTAINS
                 PRINT *, "Initilizing Game of Life, initialization: Glider"
                 CALL Init_Glide_Life(Nx, Ny, A)
             ENDIF
-        ENDIF
+!        ENDIF
 
     END SUBROUTINE Init_Life
     
@@ -187,9 +187,9 @@ CONTAINS
         ! ROUTINE START
         ! =============
      
-        IF (pid .EQ. master) THEN
+!        IF (pid .EQ. master) THEN
             DEALLOCATE(A)
-        ENDIF
+!        ENDIF
 
     END SUBROUTINE End_Life
 
