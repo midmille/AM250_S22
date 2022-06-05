@@ -630,20 +630,20 @@ CONTAINS
         recv_cnt = Nys*Nxs
 
         ! [Make Ags flat such that gather is contiguous]
-        As_flt = RESHAPE(Asg(1:Nys, 1:Nxs), (/Nys*Nxs/))
+!        As_flt = RESHAPE(Asg(1:Nys, 1:Nxs), (/Nys*Nxs/))
 
         ! [Scatter]
-        CALL MPI_GATHER(As_flt,                                      &
+        CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
         &               send_cnt,                                    &
         &               MPI_INTEGER,                                 &
-        &               A_flt,                                       &
+        &               A,                                           &
         &               recv_cnt,                                    &
         &               MPI_INTEGER,                                 &
         &               master,                                      &
         &               MPI_COMM_WORLD,                              &
         &               ierr)
 
-        A = RESHAPE(A_flt, (/Ny, Nx/))
+!        A = RESHAPE(A_flt, (/Ny, Nx/))
 
     END SUBROUTINE Gather_Life
 
