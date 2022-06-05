@@ -490,7 +490,7 @@ CONTAINS
         ENDIF
 
         ! [Require that the number of rows be evenly divisible by the number of processor.]
-        IF (MOD(Nx, Np) .NE. 0) THEN 
+        IF (MOD(Ny, Np) .NE. 0) THEN 
             PRINT *, "For row partition, please ensure MOD(Ny,Np) == 0"
             STOP "Error: Bad row number and processor count cohesion."
         ENDIF
@@ -556,21 +556,21 @@ CONTAINS
         send_cnt = Nys*Nxs
         recv_cnt = Nys*Nxs
 
-        ! [Make A flat such that scatter is contiguous]
-        A_flt = RESHAPE(A, (/Nx*Ny/))
+!        ! [Make A flat such that scatter is contiguous]
+!        A_flt = RESHAPE(A, (/Nx*Ny/))
 
         ! [Scatter]
-        CALL MPI_SCATTER(A_flt,                                      &
+        CALL MPI_SCATTER(A,                                          &
         &                send_cnt,                                   &
         &                MPI_INTEGER,                                &
-        &                As_flt,                                     &
+        &                Asg(1:Nys,1:Nxs),                           &
         &                recv_cnt,                                   &
         &                MPI_INTEGER,                                &
         &                master,                                     &
         &                MPI_COMM_WORLD,                             &
         &                ierr)
 
-        Asg(1:Nys,1:Nxs) = RESHAPE(As_flt, (/Nys, Nxs/))
+!        Asg(1:Nys,1:Nxs) = RESHAPE(As_flt, (/Nys, Nxs/))
 
     
     END SUBROUTINE Share_Life

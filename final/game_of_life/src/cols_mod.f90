@@ -9,7 +9,7 @@ MODULE cols_mod
     
     USE mpi 
 
-    USE funcs_mod, ONLY: Life, Write_Life_Step, Init_Partition, Partititon_Cols 
+    USE funcs_mod, ONLY: Life, Write_Life_Step, Init_Partition, Partition_Cols 
     USE funcs_mod, ONLY: Share_Life, Gather_Life, Share_BC
 
     implicit none
