@@ -124,16 +124,18 @@ def Animate_Life(Nx, Ny, life_array, tstps):
 if __name__ == '__main__': 
     
     ## [Parameters from main.f90]
-    Nx = 20
-    Ny = 20
+    Nx = 10
+    Ny = 10
     Nt = 80
     Nw = 1
     ## [The parallelkization flag.]
-    pflag = 'serial'
+    pflag = 'cols'
     savefile_head = "life_out"
     ## [The out directory for the given parralleization.]
     if pflag == 'serial': 
         outdir = '../output/serial_out/'
+    if pflag == 'cols':
+        outdir = '../output/cols_out/'
 
     ## [Read the output.]
     life_arr, tstps = Read_Output(Nx, Ny, Nt, Nw, savefile_head, outdir)

@@ -35,7 +35,7 @@ PROGRAM main
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
-    character(len=100), parameter      :: iflag = 'glide'
+    character(len=100), parameter      :: iflag = 'rand'
     ! [The write out put flag, boolean, options are, 
     !  .TRUE.  : Life Matrix Output is written to desginated file.
     !  .FALSE. : Life Mat no written, reasons might be for timing studies.]
