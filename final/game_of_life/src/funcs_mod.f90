@@ -150,9 +150,13 @@ CONTAINS
             ! [Initialize A according to the iflag.]
             IF (iflag .EQ. 'rand') THEN 
                 PRINT *, "Initilizing Game of Life, initialization: Random"
+                PRINT *, "------------------------------------------------"
+                PRINT *, ''
                 CALL Init_Rand_Life(Nx, Ny, A)
             ELSE IF (iflag .EQ. 'glide') THEN 
                 PRINT *, "Initilizing Game of Life, initialization: Glider"
+                PRINT *, "------------------------------------------------"
+                PRINT *, ''
                 CALL Init_Glide_Life(Nx, Ny, A)
             ENDIF
 !        ENDIF
@@ -367,7 +371,8 @@ CONTAINS
         ! [Concatinate the strings.]
         savefile = outdir // savefile_head // k_char // ".dat"
         
-        PRINT *, savefile
+        PRINT *, ''
+        PRINT *, "Writing output to: ", savefile
         ! [Write the matrix to the above file.]
         CALL Write_Life_Mat(savefile, Nx, Ny, A)
 
@@ -556,19 +561,57 @@ CONTAINS
         send_cnt = Nys*Nxs
         recv_cnt = Nys*Nxs
 
+        ! [This is the column paralleization scatter.]
+        IF ((Nys .EQ. Ny) .AND. (Nxs .NE. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Scattering A to COLUMN based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+            
+            ! [Scatter sub matrix partitions as contiguously found in memory.]
+            CALL MPI_SCATTER(A,                                          &
+            &                send_cnt,                                   &
+            &                MPI_INTEGER,                                &
+            &                Asg(1:Nys,1:Nxs),                           &
+            &                recv_cnt,                                   &
+            &                MPI_INTEGER,                                &
+            &                master,                                     &
+            &                MPI_COMM_WORLD,                             &
+            &                ierr)
+        
+        ! [This is the rows parallelization.]
+        ELSEIF ((Nys .NE. Ny) .AND. (Nxs .EQ. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Scattering A to ROW based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+
+            ! [Scatter sub matrix partitions according to row type.]
+            CALL MPI_SCATTER(A,                                          &
+            &                send_cnt,                                   &
+            &                MPI_INTEGER,                                &
+            &                Asg(1:Nys,1:Nxs),                           &
+            &                recv_cnt,                                   &
+            &                MPI_INTEGER,                                &
+            &                master,                                     &
+            &                MPI_COMM_WORLD,                             &
+            &                ierr)
+ 
+        ! [This is the tile parallelization.]
+        ELSEIF ((Nys .NE. Ny) .AND. (Nxs .NE. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Scattering A to TILE based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+
+        ENDIF 
+
 !        ! [Make A flat such that scatter is contiguous]
 !        A_flt = RESHAPE(A, (/Nx*Ny/))
 
-        ! [Scatter]
-        CALL MPI_SCATTER(A,                                          &
-        &                send_cnt,                                   &
-        &                MPI_INTEGER,                                &
-        &                Asg(1:Nys,1:Nxs),                           &
-        &                recv_cnt,                                   &
-        &                MPI_INTEGER,                                &
-        &                master,                                     &
-        &                MPI_COMM_WORLD,                             &
-        &                ierr)
 
 !        Asg(1:Nys,1:Nxs) = RESHAPE(As_flt, (/Nys, Nxs/))
 
@@ -632,16 +675,42 @@ CONTAINS
         ! [Make Ags flat such that gather is contiguous]
 !        As_flt = RESHAPE(Asg(1:Nys, 1:Nxs), (/Nys*Nxs/))
 
-        ! [Scatter]
-        CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
-        &               send_cnt,                                    &
-        &               MPI_INTEGER,                                 &
-        &               A,                                           &
-        &               recv_cnt,                                    &
-        &               MPI_INTEGER,                                 &
-        &               master,                                      &
-        &               MPI_COMM_WORLD,                              &
-        &               ierr)
+        ! [This is the column paralleization gather.]
+        IF ((Nys .EQ. Ny) .AND. (Nxs .NE. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Gathering A to COLUMN based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+            ! [Gather partition sub arrays contigously in memory.]
+            CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
+            &               send_cnt,                                    &
+            &               MPI_INTEGER,                                 &
+            &               A,                                           &
+            &               recv_cnt,                                    &
+            &               MPI_INTEGER,                                 &
+            &               master,                                      &
+            &               MPI_COMM_WORLD,                              &
+            &               ierr)
+        
+        ! [This is the rows parallelization.]
+        ELSEIF ((Nys .NE. Ny) .AND. (Nxs .EQ. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Gathering A to ROW based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+
+        ! [This is the tile parallelization.]
+        ELSEIF ((Nys .NE. Ny) .AND. (Nxs .NE. Nx)) THEN 
+            IF (pid .EQ. master) THEN 
+                PRINT *, "Gathering A to ROW based partitions."
+                PRINT *, "----------------------------------------"
+                PRINT *, ''
+            ENDIF
+
+        ENDIF 
+
 
 !        A = RESHAPE(A_flt, (/Ny, Nx/))
 

@@ -6,11 +6,13 @@ SRCDIR = src
 OBJECTS = $(OBJDIR)/funcs_mod.o\
 		  $(OBJDIR)/serial_mod.o\
 		  $(OBJDIR)/cols_mod.o\
+		  $(OBJDIR)/rows_mod.o\
 		  $(OBJDIR)/main.o
 
 MODULES = $(OBJDIR)/funcs_mod.mod\
 		  $(OBJDIR)/serial_mod.mod\
 		  $(OBJDIR)/cols_mod.mod\
+		  $(OBJDIR)/rows_mod.mod
 
 .PHONY: clean 
 

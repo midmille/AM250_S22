@@ -10,7 +10,7 @@ MODULE cols_mod
     USE mpi 
 
     USE funcs_mod, ONLY: Life, Write_Life_Step, Init_Partition, Partition_Cols 
-    USE funcs_mod, ONLY: Share_Life, Gather_Life, Share_BC
+    USE funcs_mod, ONLY: Share_BC
 
     implicit none
 
@@ -21,7 +21,143 @@ MODULE cols_mod
 
 
 CONTAINS
+
+
+    !-----------------------------------------------------------------
+    SUBROUTINE Share_Life_Cols(pid,                                  &
+    &                     master,                                    &
+    &                     Nx,                                        &
+    &                     Ny,                                        &
+    &                     A,                                         &
+    &                     Nxs,                                       &
+    &                     Nys,                                       & 
+    &                     Nxsp1,                                     &
+    &                     Nysp1,                                     &
+    &                     Asg)
+    !-----------------------------------------------------------------
+        ! This algorithm implements the scatter to share the parent matrix
+        ! from the master processor to the child sub matrices of the 
+        ! rest of the processors.  
+
+        ! Parameters
+        ! ----------
+        ! [Pid.]
+        integer, intent(in)                      :: pid
+        ! [The master procs id.]
+        integer, intent(in)                      :: master
+        ! [The number of cols, rows of the parent matrix.]
+        integer, intent(in)                      :: Nx, Ny
+        ! [The parent matrix, only allocated and initialized on master.]
+        integer, intent(in)                      :: A(Ny, Nx)
+        ! [The number of cols, rows of child matrix partition.]
+        integer, intent(in)                      :: Nxs, Nys
+        ! [Their p1 counterparts.]
+        integer, intent(in)                      :: Nxsp1, Nysp1
+
+        ! Returns
+        ! -------
+        ! [The child matrix with ghost nodes.]
+        integer, intent(inout)                   :: Asg(0:Nysp1, 0:Nxsp1)
+
+        ! Variables
+        ! ----------
+        ! [The send and recv count.]
+        integer                                  :: send_cnt, recv_cnt 
+        ! [A flattened]
+        integer                                  :: A_flt(Nx*Ny)
+        ! [Asg flattened.]
+        integer                                  :: As_flt(Nxs*Nys)
+        ! [The error returned error code.]
+        integer                                  :: ierr
+
+
+        ! ROUTINE START
+        ! =============
+
+        ! [The send and recv counts.]
+        send_cnt = Nys*Nxs
+        recv_cnt = Nys*Nxs
+
+        ! [Scatter sub matrix partitions as contiguously found in memory.]
+        CALL MPI_SCATTER(A,                                          &
+        &                send_cnt,                                   &
+        &                MPI_INTEGER,                                &
+        &                Asg(1:Nys,1:Nxs),                           &
+        &                recv_cnt,                                   &
+        &                MPI_INTEGER,                                &
+        &                master,                                     &
+        &                MPI_COMM_WORLD,                             &
+        &                ierr)
     
+    END SUBROUTINE Share_Life_Cols
+
+
+    !-----------------------------------------------------------------
+    SUBROUTINE Gather_Life_Cols(pid,                                 &
+    &                      master,                                   &
+    &                      Nxs,                                      & 
+    &                      Nys,                                      &
+    &                      Nxsp1,                                    &
+    &                      Nysp1,                                    &
+    &                      Asg,                                      &
+    &                      Nx,                                       &
+    &                      Ny,                                       &
+    &                      A)
+    !-----------------------------------------------------------------
+        ! This algorithm implements the mpi gether routine to gather the 
+        ! sub matrices back into the parent matrix.
+
+        ! Parameters
+        ! ----------
+        ! [Pid.]
+        integer, intent(in)                      :: pid
+        ! [The master procs id.]
+        integer, intent(in)                      :: master
+        ! [The number of cols, rows of child matrix partition.]
+        integer, intent(in)                      :: Nxs, Nys
+        ! [Their p1 counterparts.]
+        integer, intent(in)                      :: Nxsp1, Nysp1
+        ! [The child matrix with ghost nodes.]
+        integer, intent(in)                      :: Asg(0:Nysp1, 0:Nxsp1)
+        ! [The number of cols, rows of the parent matrix.]
+        integer, intent(in)                      :: Nx, Ny
+
+        ! Returns
+        ! -------
+        ! [The parent matrix, only allocated and initialized on master.]
+        integer, intent(inout)                   :: A(Ny, Nx)
+
+        ! Variables
+        ! ----------
+        ! [The send and recv count.]
+        integer                                  :: send_cnt, recv_cnt 
+        ! [A flattened]
+        integer                                  :: A_flt(Nx*Ny)
+        ! [Asg flattened.]
+        integer                                  :: As_flt(Nxs*Nys)
+        ! [The error returned error code.]
+        integer                                  :: ierr
+
+        ! ROUTINE START
+        ! =============
+
+        ! [The send and recv counts.]
+        send_cnt = Nys*Nxs
+        recv_cnt = Nys*Nxs
+
+        ! [Gather partition sub arrays contigously in memory.]
+        CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
+        &               send_cnt,                                    &
+        &               MPI_INTEGER,                                 &
+        &               A,                                           &
+        &               recv_cnt,                                    &
+        &               MPI_INTEGER,                                 &
+        &               master,                                      &
+        &               MPI_COMM_WORLD,                              &
+        &               ierr)
+        
+    END SUBROUTINE Gather_Life_Cols
+
 
     !-----------------------------------------------------------------
     SUBROUTINE UGN_Cols(pid,                                         & 
@@ -180,7 +316,7 @@ CONTAINS
         CALL Init_Partition(Nxsp1, Nysp1, Asg)
 
         ! [Broadcat designated partition to each processor from A on master.]
-        CALL Share_Life(pid,                                         &
+        CALL Share_Life_Cols(pid,                                    &
         &               master,                                      &
         &               Nx,                                          &
         &               Ny,                                          &
@@ -190,21 +326,7 @@ CONTAINS
         &               Nxsp1,                                       &
         &               Nysp1,                                       &
         &               Asg)
-
         
-        DO k=0,Np
-            IF (pid .EQ. k) THEN      
-                PRINT *, "pid:", pid
-                PRINT *, "A after scatter and gather:"
-                DO i=1,Ny
-                    DO j=1,Nx
-                        WRITE(*,'(I2)', advance='no') A(i,j)
-                    ENDDO
-                    WRITE(*,*) ''
-                ENDDO
-            ENDIF
-        ENDDO
-     
         ! [Loop time.]
         DO k=1,Nt 
 
@@ -226,7 +348,7 @@ CONTAINS
                ! [Write first step and the output every Nw time step.]
                 IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
                     ! [Gather everything to A_k, which is A at step k.]
-                    CALL Gather_Life(pid,                                        &
+                    CALL Gather_Life_Cols(pid,                                   &
                     &                master,                                     &
                     &                Nxs,                                        & 
                     &                Nys,                                        &
@@ -238,8 +360,8 @@ CONTAINS
                     &                A_k)
 
                     IF (pid .EQ. master) THEN      
-                        PRINT *, "pid:", pid
                         PRINT *, "A after scatter and gather:"
+                        PRINT *, "---------------------------"
                         DO i=1,Ny
                             DO j=1,Nx
                                 WRITE(*,'(I2)', advance='no') A_k(i,j)
@@ -247,6 +369,7 @@ CONTAINS
                             WRITE(*,*) ''
                         ENDDO
                     ENDIF
+
                     ! [Write the result on master processor.]
                     IF (pid .EQ. master) THEN
                         ! [Write A_k.]

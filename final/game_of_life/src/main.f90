@@ -11,6 +11,7 @@ PROGRAM main
     USE funcs_mod, ONLY: Init_Life, End_Life
     USE serial_mod, ONLY: Run_Serial_Life
     USE cols_mod, ONLY: Run_Column_Life
+    USE rows_mod, ONLY: Run_Row_Life
 
     implicit none
     
@@ -23,7 +24,7 @@ PROGRAM main
     ! [The size of the y-dimension, the number of rows.]
     integer, parameter                 :: Ny = 10
     ! [The number of time steps to take.]
-    integer, parameter                 :: Nt = 80
+    integer, parameter                 :: Nt = 40
     ! [The number of time steps between each gather and write.]
     integer, parameter                 :: Nw = 1
     ! [The parallelization flag, the options are, 
@@ -31,7 +32,7 @@ PROGRAM main
     !  'cols'   : Parallelizes the problem into column partitions, 
     !  'rows'   : Parallelizes the problem into rows paritions,
     !  'tile'   : Parallelizes the problem into rectangular tile partitions.]
-    character(len=100), parameter      :: pflag = "cols"
+    character(len=100), parameter      :: pflag = "rows"
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
@@ -92,6 +93,11 @@ PROGRAM main
     ! [Run the life model for given parallelization flag.]
     IF (pflag .EQ. 'serial') THEN  
         PRINT *, "Running Game of Life in series..."
+        PRINT *, "---------------------------------"
+        PRINT *, "Hello from processor:", pid
+        PRINT *, "---------------------        ----"
+        PRINT *, ''
+
         CALL Run_Serial_Life(pid,                                    &
         &                    master,                                 & 
         &                    Nx,                                     & 
@@ -110,6 +116,10 @@ PROGRAM main
     ! [Run the life model for column paralleization.]
     ELSE IF (pflag .EQ. 'cols') THEN 
         PRINT *, "Running Game of Life in parallel: Column Partitions"
+        PRINT *, "---------------------------------------------------"
+        PRINT *, "Hello from processor:", pid
+        PRINT *, "---------------------        ----"
+        PRINT *, ""
         CALL Run_Column_Life(pid,                                    &
         &                    master,                                 &
         &                    Np,                                     &
@@ -124,8 +134,26 @@ PROGRAM main
         !                    [OUTPUT]                                ! 
         &                    t)
  
-!    ELSE IF (pflag .EQ. 'rows') THEN 
-!        CALL Run_Row_Life()
+    ELSE IF (pflag .EQ. 'rows') THEN 
+        PRINT *, "Running Game of Life in parallel: Row Partitions"
+        PRINT *, "---------------------------------------------------"
+        PRINT *, "Hello from processor:", pid
+        PRINT *, "---------------------        ----"
+        PRINT *, ""
+        CALL Run_Row_Life(pid,                                       &
+        &                    master,                                 &
+        &                    Np,                                     &
+        &                    Nx,                                     &
+        &                    Ny,                                     &
+        &                    Nt,                                     &   
+        &                    Nw,                                     &
+        &                    A,                                      &
+        &                    savefile_head,                          &
+        &                    cols_outdir,                            &
+        &                    woflag,                                 &
+        !                    [OUTPUT]                                ! 
+        &                    t)
+ 
 !    ELSE IF (pflag .EQ. 'tile') THEN
 !        CALL Run_Tile_Life()
     END IF
