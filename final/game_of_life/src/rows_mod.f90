@@ -24,8 +24,7 @@ CONTAINS
     &                         Ny,                                    &
     &                         Nxs,                                   &
     &                         Nys,                                   &
-    &                         rowtype,                               &
-    &                         rowtypetmp)
+    &                         rowtype)
     !----------------------------------------------------------------
         ! This routine creates and commits the rows type data type for
         ! the provided matrix dimensions.
@@ -39,10 +38,12 @@ CONTAINS
         ! Returns
         ! -------
         ! [The rowtype for the designated matrix dims.]
-        integer, intent(out)                     :: rowtype, rowtypetmp
+        integer, intent(out)                     :: rowtype
 
         ! Variables
         ! ---------
+        ! [The temporary rowtype with large extent.]
+        integer                                  :: rowtypetmp
         ! [The err] 
         integer                                  :: ierr
         ! [The extent and lower bound, necessarily kind=MPI_ADDRESS_KIND.] 
@@ -65,7 +66,7 @@ CONTAINS
 !        CALL MPI_TYPE_COMMIT(rowtypetmp, ierr)
 
         ! [Retreive the bit size of an MPI_INTEGER.]
-        CALL MPI_TYPE_SIZE(rowtypetmp, typesize, ierr)
+        CALL MPI_TYPE_SIZE(MPI_INTEGER, typesize, ierr)
 
 !        PRINT *, "MPI type size of rowtypetmp", typesize
 !        CALL MPI_TYPE_GET_EXTENT(rowtypetmp, lb, extent, ierr)
@@ -246,9 +247,9 @@ CONTAINS
         CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
         &               send_cnt,                                    &
         &               MPI_INTEGER,                                 &
-        &               A(:,:),                                           &
+        &               A(:,:),                                      &
         &               recv_cnt,                                    &
-        &               rowtype,                                 &
+        &               rowtype,                                     &
         &               master,                                      &
         &               MPI_COMM_WORLD,                              &
         &               ierr)
@@ -317,12 +318,12 @@ CONTAINS
             right = pid + 1 
         END IF
 
-        ! [First implement row exchange.]
-        Asg(0,1:Nxs) = Asg(Nys, 1:Nxs)
-        Asg(Nysp1,1:Nxs) = Asg(1,1:Nxs)
+        ! [First implement col exchange.]
+        Asg(1:Nys,0) = Asg(1:Nys, Nxs)
+        Asg(1:Nys,Nxsp1) = Asg(1:Nys,1)
 
         ! [The vecotr being sent is an entire row including ghots cells.]
-        cnt = Nysp1+1
+        cnt = Nxsp1+1
 
         ! [Send and receive the columns for the
         CALL Share_BC(pid,                                           &
@@ -330,13 +331,13 @@ CONTAINS
         &             left,                                          &
         &             cnt,                                           &
 !        &             sendR_bc,                                      &
-        &             Asg(0:Nysp1,Nxs),                              &
+        &             Asg(Nys,0:Nxsp1),                              &
 !        &             sendL_bc,                                      &
-        &             Asg(0:Nysp1,1),                                &
+        &             Asg(1,0:Nxsp1),                                &
 !        &             recvL_bc,                                      &
-        &             Asg(0:Nysp1, 0),                               &
+        &             Asg(0,0:Nxsp1),                               &
 !        &             recvR_bc)
-        &             Asg(0:Nysp1, Nxsp1))                
+        &             Asg(Nysp1, 0:Nxsp1))                
 
     END SUBROUTINE UGN_Rows
 
@@ -422,7 +423,7 @@ CONTAINS
 
         ! [Create the rowtype for the matrix A for its gather and scatter
         !  operations.]
-        CALL Create_Rowtype(Nx, Ny, Nxs, Nys, rowtype, rowtypetmp)
+        CALL Create_Rowtype(Nx, Ny, Nxs, Nys, rowtype)
 
         ! [Get the rowtype for the scatter and gather of A.]
 
@@ -451,19 +452,15 @@ CONTAINS
         &               Asg)
 
 !        IF (pid .EQ. master) THEN      
-            PRINT *, "Asg after scatter:"
-            PRINT *, "---------------------------"
-            DO i=1,Nys
-                DO j=1,Nxs
-                    WRITE(*,'(I2)', advance='no') Asg(i,j)
-                ENDDO
-                WRITE(*,*) ''
-            ENDDO
+!            PRINT *, "Asg after scatter:"
+!            PRINT *, "---------------------------"
+!            DO i=1,Nys
+!                DO j=1,Nxs
+!                    WRITE(*,'(I2)', advance='no') Asg(i,j)
+!                ENDDO
+!                WRITE(*,*) ''
+!            ENDDO
 !        ENDIF
-
-        A_k =0
-
-        CALL MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
 !        CALL Gather_Life_Rows(pid,                                   &
 !        &                master,                                     &
@@ -476,7 +473,8 @@ CONTAINS
 !        &                Nx,                                         &
 !        &                Ny,                                         &
 !        &                A_k)
-
+!
+!        CALL MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
 !        IF (pid .EQ. master) THEN      
 !            PRINT *, "A after gather:"
@@ -489,68 +487,69 @@ CONTAINS
 !            ENDDO
 !        ENDIF
 
-        CALL MPI_TYPE_FREE(rowtype, ierr)
-        ! [Free the temporary row type.]
-        CALL MPI_TYPE_FREE(rowtypetmp,ierr)
-        DEALLOCATE(Asg)
 
         ! [Loop time.]
-!        DO k=1,Nt 
-!
-!            ! [Updated the ghost nodes on each partition. This includes the
-!            !  necessary ringed send and receives of the columns.]
-!            CALL UGN_Cols(pid,                                       & 
-!            &             Np,                                        &
-!            &             Nxs,                                       &
-!            &             Nys,                                       &
-!            &             Nxsp1,                                     &
-!            &             Nysp1,                                     &
-!            &             Asg)
-! 
-!            ! [Run life on each partition.]
-!            CALL Life(Nxsp1, Nysp1, Asg)
-!
-!            ! [If the write output flag is true.]
-!            IF (woflag .EQ. .TRUE.) THEN 
-!               ! [Write first step and the output every Nw time step.]
-!                IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
-!                    ! [Gather everything to A_k, which is A at step k.]
-!                    CALL Gather_Life(pid,                                        &
-!                    &                master,                                     &
-!                    &                Nxs,                                        & 
-!                    &                Nys,                                        &
-!                    &                Nxsp1,                                      &
-!                    &                Nysp1,                                      &
-!                    &                Asg,                                        &
-!                    &                Nx,                                         &
-!                    &                Ny,                                         &
-!                    &                A_k)
-!
-!                    IF (pid .EQ. master) THEN      
-!                        PRINT *, "A after scatter and gather:"
-!                        PRINT *, "---------------------------"
-!                        DO i=1,Ny
-!                            DO j=1,Nx
-!                                WRITE(*,'(I2)', advance='no') A_k(i,j)
-!                            ENDDO
-!                            WRITE(*,*) ''
-!                        ENDDO
-!                    ENDIF
-! 
-!                    ! [Write the result on master processor.]
-!                    IF (pid .EQ. master) THEN
-!                        ! [Write A_k.]
-!                        CALL Write_Life_Step(k,                      &
-!                        &                    Nx,                     &
-!                        &                    Ny,                     &
-!                        &                    A_k,                    &
-!                        &                    savefile_head,          &
-!                        &                    cols_outdir)
-!                    ENDIF
-!                ENDIF 
-!            ENDIF
-!        ENDDO 
+        DO k=1,Nt 
 
+            ! [Updated the ghost nodes on each partition. This includes the
+            !  necessary ringed send and receives of the columns.]
+            CALL UGN_Rows(pid,                                       & 
+            &             Np,                                        &
+            &             Nxs,                                       &
+            &             Nys,                                       &
+            &             Nxsp1,                                     &
+            &             Nysp1,                                     &
+            &             Asg)
+ 
+            ! [Run life on each partition.]
+            CALL Life(Nxsp1, Nysp1, Asg)
+
+            ! [If the write output flag is true.]
+            IF (woflag .EQ. .TRUE.) THEN 
+               ! [Write first step and the output every Nw time step.]
+                IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
+
+                    ! [Gether the life parent array for the write step.]
+                    CALL Gather_Life_Rows(pid,                                   &
+                    &                master,                                     &
+                    &                rowtype,                                    &
+                    &                Nxs,                                        & 
+                    &                Nys,                                        &
+                    &                Nxsp1,                                      &
+                    &                Nysp1,                                      &
+                    &                Asg,                                        &
+                    &                Nx,                                         &
+                    &                Ny,                                         &
+                    &                A_k)
+
+
+                    IF (pid .EQ. master) THEN      
+                        PRINT *, "A after scatter and gather:"
+                        PRINT *, "---------------------------"
+                        DO i=1,Ny
+                            DO j=1,Nx
+                                WRITE(*,'(I2)', advance='no') A_k(i,j)
+                            ENDDO
+                            WRITE(*,*) ''
+                        ENDDO
+                    ENDIF
+ 
+                    ! [Write the result on master processor.]
+                    IF (pid .EQ. master) THEN
+                        ! [Write A_k.]
+                        CALL Write_Life_Step(k,                      &
+                        &                    Nx,                     &
+                        &                    Ny,                     &
+                        &                    A_k,                    &
+                        &                    savefile_head,          &
+                        &                    cols_outdir)
+                    ENDIF
+                ENDIF 
+            ENDIF
+        ENDDO 
+
+        CALL MPI_TYPE_FREE(rowtype, ierr)
+        DEALLOCATE(Asg)
 
     END SUBROUTINE Run_Row_Life
 
