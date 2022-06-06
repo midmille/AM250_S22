@@ -384,6 +384,8 @@ CONTAINS
             ENDIF
         ENDDO 
 
+        DEALLOCATE(Asg)
+
 
     END SUBROUTINE Run_Column_Life
 

@@ -87,6 +87,7 @@ PROGRAM main
 
     ! [This creates and allocates the parent matrix on master processor.]
     CALL Init_Life(pid, master, iflag, Nx, Ny, A)
+    CALL MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
     ! [BARRIER??????
 
@@ -165,3 +166,17 @@ PROGRAM main
     CALL MPI_FINALIZE(ierr)
 
 END PROGRAM main
+
+
+! REFERENCES 
+! -----------
+! 
+! Derived Data Types: 
+!   --> MPI Derived Datatypes, SCAI, Course Edittion 2016
+!       -- https://hpc-forge.cineca.it/files/CoursesDev/public/2016/Rome/Parallel_I_O_and_management_of_large_scientific_data/MPI2-DataTypes_2016.pdf
+! 
+!   --> Stack Overflow: 'compilation error with MPI_type_create_resized in
+!                        Fortran 90'
+!       -- https://stackoverflow.com/questions/16241852/compilation-error-with-mpi-type-create-resized-in-fortran-90
+! 
+! 
