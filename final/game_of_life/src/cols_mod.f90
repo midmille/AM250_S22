@@ -297,16 +297,17 @@ CONTAINS
         ! [Time indexing.]
         integer                              :: k
         ! [Temp other indexing.]
-        integer::i,j
+        integer                              :: i,j
+        ! [The t1 and t2 for elapsed time.] 
+        real(dp)                             :: t1, t2
 
         ! ROUTINE START
         ! =============
 
-        ! [Temp place holder for time output.]
-        t = 0
         ! [First step is to partition the problem according to the domain size, 
         !  the number of processors, and the designmated decomposition.]
         CALL Partition_Cols(Nx, Np, Nxs)
+        
         ! [Setting the size of each sub domain given Ns from above.]
         Nys = Ny
         Nxsp1 = Nxs + 1
@@ -317,15 +318,18 @@ CONTAINS
 
         ! [Broadcat designated partition to each processor from A on master.]
         CALL Share_Life_Cols(pid,                                    &
-        &               master,                                      &
-        &               Nx,                                          &
-        &               Ny,                                          &
-        &               A,                                           &
-        &               Nxs,                                         &
-        &               Nys,                                         & 
-        &               Nxsp1,                                       &
-        &               Nysp1,                                       &
-        &               Asg)
+        &                    master,                                 &
+        &                    Nx,                                     &
+        &                    Ny,                                     &
+        &                    A,                                      &
+        &                    Nxs,                                    &
+        &                    Nys,                                    & 
+        &                    Nxsp1,                                  &
+        &                    Nysp1,                                  &
+        &                    Asg)
+
+        ! [Start the timer.]
+        t1 = MPI_WTIME()
         
         ! [Loop time.]
         DO k=1,Nt 
@@ -347,21 +351,22 @@ CONTAINS
             IF (woflag .EQ. .TRUE.) THEN 
                ! [Write first step and the output every Nw time step.]
                 IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
+
                     ! [Gather everything to A_k, which is A at step k.]
                     CALL Gather_Life_Cols(pid,                                   &
-                    &                master,                                     &
-                    &                Nxs,                                        & 
-                    &                Nys,                                        &
-                    &                Nxsp1,                                      &
-                    &                Nysp1,                                      &
-                    &                Asg,                                        &
-                    &                Nx,                                         &
-                    &                Ny,                                         &
-                    &                A_k)
+                    &                     master,                                &
+                    &                     Nxs,                                   & 
+                    &                     Nys,                                   &
+                    &                     Nxsp1,                                 &
+                    &                     Nysp1,                                 &
+                    &                     Asg,                                   &
+                    &                     Nx,                                    &
+                    &                     Ny,                                    &
+                    &                     A_k)
 
                     IF (pid .EQ. master) THEN      
-                        PRINT *, "A after scatter and gather:"
-                        PRINT *, "---------------------------"
+                        PRINT *, "A after time step:", k
+                        PRINT *, "--------------------------------"
                         DO i=1,Ny
                             DO j=1,Nx
                                 WRITE(*,'(I2)', advance='no') A_k(i,j)
@@ -384,6 +389,13 @@ CONTAINS
             ENDIF
         ENDDO 
 
+        ! [End the timer.]
+        t2 = MPI_WTIME()
+
+        ! [Calculate the elapsed time.]
+        t = t2 - t1
+
+        ! [Deallocate local allocations.]
         DEALLOCATE(Asg)
 
 

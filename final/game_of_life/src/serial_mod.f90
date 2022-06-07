@@ -112,9 +112,9 @@ CONTAINS
         integer                              :: Ag(0:Nyp1, 0:Nxp1)
         ! [Time indexing.]
         integer                              :: k
+        ! [The t1 and t2 for time elapsed.]
+        real (dp)                            :: t1, t2
 
-        !!!!!! TEMP !!!!!
-        t = 0
 
         ! ROUTINE START
         ! =============
@@ -126,6 +126,9 @@ CONTAINS
             Ag = 0
             ! [Init center of Ag to be A.]
             Ag(1:Ny, 1:Nx) = A 
+
+            ! [Start the timer.]
+            t1 = MPI_WTIME()
     
             ! [Loop time.]
             DO k=1,Nt
@@ -149,6 +152,13 @@ CONTAINS
                     ENDIF 
                 ENDIF
             ENDDO
+
+            ! [End the timer.]
+            t2 = MPI_WTIME()
+
+            ! [Calculate the elapsed time, only available on master.]
+            t = t2 - t1
+
         ENDIF 
 
 

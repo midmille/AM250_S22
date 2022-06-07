@@ -149,14 +149,20 @@ CONTAINS
 
             ! [Initialize A according to the iflag.]
             IF (iflag .EQ. 'rand') THEN 
-                PRINT *, "Initilizing Game of Life, initialization: Random"
-                PRINT *, "------------------------------------------------"
-                PRINT *, ''
+                IF (pid .EQ. master) THEN 
+                    PRINT *, "Initilizing Game of Life, initialization: Random"
+                    PRINT *, "------------------------------------------------"
+                    PRINT *, ''
+                ENDIF
+
                 CALL Init_Rand_Life(Nx, Ny, A)
             ELSE IF (iflag .EQ. 'glide') THEN 
-                PRINT *, "Initilizing Game of Life, initialization: Glider"
-                PRINT *, "------------------------------------------------"
-                PRINT *, ''
+                IF (pid .EQ. master) THEN 
+                    PRINT *, "Initilizing Game of Life, initialization: Glider"
+                    PRINT *, "------------------------------------------------"
+                    PRINT *, ''
+                ENDIF
+
                 CALL Init_Glide_Life(Nx, Ny, A)
             ENDIF
 !        ENDIF

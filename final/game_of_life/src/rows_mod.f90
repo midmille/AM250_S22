@@ -33,7 +33,7 @@ CONTAINS
         ! ----------
         ! [The number of columns and rows for of the matrix this rowtype i
         !  will belong to.]
-        integer, intent(in) :: Nx, Ny, Nxs, Nys
+        integer, intent(in)                      :: Nx, Ny, Nxs, Nys
 
         ! Returns
         ! -------
@@ -101,16 +101,16 @@ CONTAINS
 
     !-----------------------------------------------------------------
     SUBROUTINE Share_Life_Rows(pid,                                  &
-    &                     master,                                    &
-    &                     rowtype,                                   &
-    &                     Nx,                                        &
-    &                     Ny,                                        &
-    &                     A,                                         &
-    &                     Nxs,                                       &
-    &                     Nys,                                       & 
-    &                     Nxsp1,                                     &
-    &                     Nysp1,                                     &
-    &                     Asg)
+    &                          master,                               &
+    &                          rowtype,                              &
+    &                          Nx,                                   &
+    &                          Ny,                                   &
+    &                          A,                                    &
+    &                          Nxs,                                  &
+    &                          Nys,                                  & 
+    &                          Nxsp1,                                &
+    &                          Nysp1,                                &
+    &                          Asg)
     !-----------------------------------------------------------------
         ! This algorithm implements the scatter to share the parent matrix
         ! from the master processor to the child sub matrices of the 
@@ -157,12 +157,6 @@ CONTAINS
         ! [The send and recv counts.]
         send_cnt = 1
         recv_cnt = Nys*Nxs
-!        PRINT *, 'Send count:', send_cnt
-!        PRINT *, 'Recv count:', recv_cnt
-!        PRINT *, "Ny", Ny
-!        PRINT *, "Nys", Nys
-
-!        A_flt = RESHAPE(A, (/Nx*Ny/))
 
         ! [Scatter sub matrix partitions according to row type.]
         CALL MPI_SCATTER(A(:,:),                                     &
@@ -174,28 +168,22 @@ CONTAINS
         &                master,                                     &
         &                MPI_COMM_WORLD,                             &
         &                ierr)
- 
-!        ! [Make A flat such that scatter is contiguous]
-!        A_flt = RESHAPE(A, (/Nx*Ny/))
-
-        !Asg(1:Nys,1:Nxs) = RESHAPE(As_flt, (/Nys, Nxs/))
-
     
     END SUBROUTINE Share_Life_Rows
 
 
     !-----------------------------------------------------------------
     SUBROUTINE Gather_Life_Rows(pid,                                 &
-    &                      master,                                   &
-    &                      rowtype,                                  &
-    &                      Nxs,                                      & 
-    &                      Nys,                                      &
-    &                      Nxsp1,                                    &
-    &                      Nysp1,                                    &
-    &                      Asg,                                      &
-    &                      Nx,                                       &
-    &                      Ny,                                       &
-    &                      A)
+    &                           master,                              &
+    &                           rowtype,                             &
+    &                           Nxs,                                 & 
+    &                           Nys,                                 &
+    &                           Nxsp1,                               &
+    &                           Nysp1,                               &
+    &                           Asg,                                 &
+    &                           Nx,                                  &
+    &                           Ny,                                  &
+    &                           A)
     !-----------------------------------------------------------------
         ! This algorithm implements the mpi gether routine to gather the 
         ! sub matrices back into the parent matrix.
@@ -240,9 +228,6 @@ CONTAINS
         send_cnt = Nys*Nxs
         recv_cnt = 1
 
-        ! [Make Ags flat such that gather is contiguous]
-!        As_flt = RESHAPE(Asg(1:Nys, 1:Nxs), (/Nys*Nxs/))
-
         ! [Gather partition sub arrays contigously in memory.]
         CALL MPI_GATHER(Asg(1:Nys,1:Nxs),                            &
         &               send_cnt,                                    &
@@ -253,11 +238,8 @@ CONTAINS
         &               master,                                      &
         &               MPI_COMM_WORLD,                              &
         &               ierr)
-       
-!        A = RESHAPE(A_flt, (/Ny, Nx/))
 
     END SUBROUTINE Gather_Life_Rows
-
    
 
     !-----------------------------------------------------------------
@@ -344,18 +326,18 @@ CONTAINS
 
     !-----------------------------------------------------------------
     SUBROUTINE Run_Row_Life(pid,                                     & 
-    &                          master,                               &
-    &                          Np,                                   &
-    &                          Nx,                                   &
-    &                          Ny,                                   &
-    &                          Nt,                                   & 
-    &                          Nw,                                   &
-    &                          A,                                    &
-    &                          savefile_head,                        &
-    &                          cols_outdir,                          &
-    &                          woflag,                               &
-    !                          [OUTPUT]                              ! 
-    &                          t)
+    &                       master,                                  &
+    &                       Np,                                      &
+    &                       Nx,                                      &
+    &                       Ny,                                      &
+    &                       Nt,                                      &    
+    &                       Nw,                                      &
+    &                       A,                                       &
+    &                       savefile_head,                           &
+    &                       cols_outdir,                             &
+    &                       woflag,                                  &
+    !                       [OUTPUT]                                 ! 
+    &                       t)
     !-----------------------------------------------------------------
         ! This routine solves the game of life by partitioning the
         ! parallelization over the columns of the domain.
@@ -400,17 +382,19 @@ CONTAINS
         ! [Time indexing.]
         integer                              :: k
         ! [Temp other indexing.]
-        integer::i,j
-        integer::ierr
+        integer                              :: i,j
+        ! [The ierr required for the MPI_TYPE_FREE at the end.]
+        integer                              :: ierr
+        ! [The t1 and t2 variables for the time eplapsed.]
+        real (dp)                            :: t1, t2
 
         ! ROUTINE START
         ! =============
 
-        ! [Temp place holder for time output.]
-        t = 0
         ! [First step is to partition the problem according to the domain size, 
         !  the number of processors, and the designmated decomposition.]
         CALL Partition_Rows(Nx, Np, Nys)
+
         ! [Setting the size of each sub domain given Ns from above.]
         Nxs = Nx
         Nxsp1 = Nxs + 1
@@ -418,25 +402,10 @@ CONTAINS
 
         ! [Allocate the partitions of domain to the partition size.]
         CALL Init_Partition(Nxsp1, Nysp1, Asg)
-        PRINT *, 'SHAPE(Asg):', SHAPE(Asg)
-        CALL MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
         ! [Create the rowtype for the matrix A for its gather and scatter
         !  operations.]
         CALL Create_Rowtype(Nx, Ny, Nxs, Nys, rowtype)
-
-        ! [Get the rowtype for the scatter and gather of A.]
-
-        IF (pid .EQ. master) THEN      
-            PRINT *, "A before scatter:"
-            PRINT *, "---------------------------"
-            DO i=1,Ny
-                DO j=1,Nx
-                    WRITE(*,'(I2)', advance='no') A(i,j)
-                ENDDO
-                WRITE(*,*) ''
-            ENDDO
-        ENDIF
 
         ! [Broadcat designated partition to each processor from A on master.]
         CALL Share_Life_Rows(pid,                                    &
@@ -451,45 +420,12 @@ CONTAINS
         &               Nysp1,                                       &
         &               Asg)
 
-!        IF (pid .EQ. master) THEN      
-!            PRINT *, "Asg after scatter:"
-!            PRINT *, "---------------------------"
-!            DO i=1,Nys
-!                DO j=1,Nxs
-!                    WRITE(*,'(I2)', advance='no') Asg(i,j)
-!                ENDDO
-!                WRITE(*,*) ''
-!            ENDDO
-!        ENDIF
-
-!        CALL Gather_Life_Rows(pid,                                   &
-!        &                master,                                     &
-!        &                rowtype,                                    &
-!        &                Nxs,                                        & 
-!        &                Nys,                                        &
-!        &                Nxsp1,                                      &
-!        &                Nysp1,                                      &
-!        &                Asg,                                        &
-!        &                Nx,                                         &
-!        &                Ny,                                         &
-!        &                A_k)
-!
-!        CALL MPI_BARRIER(MPI_COMM_WORLD, ierr)
-
-!        IF (pid .EQ. master) THEN      
-!            PRINT *, "A after gather:"
-!            PRINT *, "---------------------------"
-!            DO i=1,Ny
-!                DO j=1,Nx
-!                    WRITE(*,'(I2)', advance='no') A_k(i,j)
-!                ENDDO
-!                WRITE(*,*) ''
-!            ENDDO
-!        ENDIF
-
+        ! [Start the timer.]
+        t1 = MPI_WTIME()
 
         ! [Loop time.]
         DO k=1,Nt 
+            
 
             ! [Updated the ghost nodes on each partition. This includes the
             !  necessary ringed send and receives of the columns.]
@@ -524,8 +460,8 @@ CONTAINS
 
 
                     IF (pid .EQ. master) THEN      
-                        PRINT *, "A after scatter and gather:"
-                        PRINT *, "---------------------------"
+                        PRINT *, "A after time step:", k
+                        PRINT *, "--------------------------------"
                         DO i=1,Ny
                             DO j=1,Nx
                                 WRITE(*,'(I2)', advance='no') A_k(i,j)
@@ -534,7 +470,7 @@ CONTAINS
                         ENDDO
                     ENDIF
  
-                    ! [Write the result on master processor.]
+                    ! [Write the result to file on master processor.]
                     IF (pid .EQ. master) THEN
                         ! [Write A_k.]
                         CALL Write_Life_Step(k,                      &
@@ -548,7 +484,16 @@ CONTAINS
             ENDIF
         ENDDO 
 
+        ! [End the timer.]
+        t2 = MPI_WTIME()
+
+        ! [Calculate the elapsed time .]
+        t = t2 - t1
+
+        ! [Finally free the MPI rowtype since it is no longer needed.]
         CALL MPI_TYPE_FREE(rowtype, ierr)
+
+        ! [Deallocate any local allocations.]
         DEALLOCATE(Asg)
 
     END SUBROUTINE Run_Row_Life
