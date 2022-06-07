@@ -126,7 +126,68 @@ def Get_tc(Nt):
 
     return tc_avg
 
-def Analytical_Model()
+
+def Tcomm(Np, N, ts, tw):
+    """
+    """
+
+    return 2*P*(ts+tw*N)
+
+def Tcomp(N, tc):
+    """
+    """
+    return tc*N**2
+
+def Ttot_Analytical_Model_1D(Np, N, tc, ts, tw):
+    """
+    """
+
+    ## [The communication time.]
+    Tcmm = Tcomm(Np, N, ts, tw)
+    ## [The compute time.]
+    Tcmp = Tcomp(N, tc)
+
+    Ttot = (Tcmp + Tcmm) / Np
+
+    return Ttot
+
+
+def Model_1D_Performance(Nstime_cols, Nstime_rows, Nt, Np, ts, tw):
+    """
+    """
+
+    ## [Get the tc for the analytical model.]
+    tc = Get_tc(Nt) 
+
+    Ns_cols = Nstime_cols[:,0]
+    time_cols = Nstime_cols[:,1]
+    Ns_rows = Nstime_rows[:,0]
+    time_rows = Nstime_rows[:,1]
+
+    ## [time per iterations.]
+    tpi_cols = time_cols / Nt
+    tpi_rows = time_rows / Nt
+
+    assert len(Ns_cols) == len(Ns_rows)
+
+    ## [The analytical model.][Using Nscols, shouild be same as rows.]
+    tpi_ana = Ttot_Analytical_Model_1D(Np, Ns_cols, tc, ts, tw)
+
+    ## [Plot the reslt.]
+    fig, ax = plt.subplots()
+
+    ax.plot(Ns_cols, tpi_ana, "Model")
+    ax.plot(Ns_cols, tpi_cols, "Measured: Column Partition")
+    ax.plot(Ns_cols, tpi_rows, "Measured: Row Partition")
+
+    ax.set_ylabel('Total Time [s]')
+    ax.set_xlabel('N [Cells]')
+    ax.set_title('Performance Model Analysis')
+
+    
+
+
+    return 
 
 if __name__ == '__main__':
 
@@ -136,8 +197,8 @@ if __name__ == '__main__':
     """
     Please ensure that these parameters match those you set in ../src/main.f90
     """
-    Nt = 80 
-    pflag = 'serial'
+    Nt = 40
+    pflag = 'rows'
     ## [The name of the input file.]
     Nxin_file = '../input/Nx_in.dat'
     Nyin_file = '../input/Ny_in.dat'
@@ -145,19 +206,19 @@ if __name__ == '__main__':
     out_file = '../output/time.dat'
 
     ## [These are performance model specific parameters.]
+    ## [The number of processors to use.]
+    Np = 2
     ## [The name of the file to save the time array into.]
     if pflag == 'serial': 
         save_file = f'save_time_{pflag}.p'
     else: 
         save_file = f'save_time_{pflag}_Np{Np}.p'
     ## [The array of messages sizes to loop over.]
-    Ns = np.arange(1, 1000, 100)
-    ## [The number of processors to use.]
-    Np = 2
+    Ns = np.arange(100, 1000, 100)
     ## [Set True to run mpi latency program.]
     run = False
-    ## [Set True to plot figure from pickle file.]
-    plot = True
+    ## [To load all 1D parallelizations, must run frist tho.]
+    load1d = True
 
     if run: 
         ## [Run the latency program for each message size and return the result.]
@@ -168,10 +229,10 @@ if __name__ == '__main__':
     
         ## [Save the result.]
         pickle.dump(Ns_time, open(save_file, 'wb'))
+    
+    if load1d: 
+        ## [load both the cols and rows parallelkizations for Ns.]
+        Nstime_cols = pickle.load(open(f'save_time_cols_Np{Np}.p', 'rb'))
+        Nstime_rows = pickle.load(open(f'save_time_rows_Np{Np}.p', 'rb'))
 
-    if plot: 
-        if run == False: 
-            Ns_time = pickle.load(open(save_file, 'rb'))
 
-        ## [Plot the resulting linear regression.]
-        Plot_Performance(Ns, time, Nt)

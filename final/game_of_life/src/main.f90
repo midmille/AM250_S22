@@ -36,9 +36,9 @@ PROGRAM main
     !  'cols'   : Parallelizes the problem into column partitions, 
     !  'rows'   : Parallelizes the problem into rows paritions,
     !  'tile'   : Parallelizes the problem into rectangular tile partitions.]
-    character(len=100), parameter      :: pflag = "serial"
+!    character(len=100), parameter      :: pflag = "serial"
 !    character(len=100), parameter      :: pflag = "cols"
-!    character(len=100), parameter      :: pflag = "rows"
+    character(len=100), parameter      :: pflag = "rows"
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
