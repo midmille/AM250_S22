@@ -131,7 +131,7 @@ def Tcomm(Np, N, ts, tw):
     """
     """
 
-    return 2*P*(ts+tw*N)
+    return 2*Np*(ts+tw*N)
 
 def Tcomp(N, tc):
     """
@@ -159,32 +159,45 @@ def Model_1D_Performance(Nstime_cols, Nstime_rows, Nt, Np, ts, tw):
     ## [Get the tc for the analytical model.]
     tc = Get_tc(Nt) 
 
+
+    ## [Download the serial run.]
+    Nstime_serial = pickle.load(open('save_time_serial.p', 'rb'))
+
     Ns_cols = Nstime_cols[:,0]
     time_cols = Nstime_cols[:,1]
     Ns_rows = Nstime_rows[:,0]
     time_rows = Nstime_rows[:,1]
+    Ns_serial = Nstime_serial[:,0]
+    time_serial = Nstime_serial[:,1]
 
     ## [time per iterations.]
     tpi_cols = time_cols / Nt
     tpi_rows = time_rows / Nt
+    tpi_serial = time_serial / Nt
 
     assert len(Ns_cols) == len(Ns_rows)
+    assert len(Ns_cols) == len(Ns_serial)
 
     ## [The analytical model.][Using Nscols, shouild be same as rows.]
     tpi_ana = Ttot_Analytical_Model_1D(Np, Ns_cols, tc, ts, tw)
+    tpi_ana_1np = Ttot_Analytical_Model_1D(1, Ns_cols, tc, ts, tw)
 
     ## [Plot the reslt.]
     fig, ax = plt.subplots()
 
-    ax.plot(Ns_cols, tpi_ana, "Model")
-    ax.plot(Ns_cols, tpi_cols, "Measured: Column Partition")
-    ax.plot(Ns_cols, tpi_rows, "Measured: Row Partition")
+    ax.plot(Ns_cols, tpi_ana, label = "Model")
+    ax.plot(Ns_cols, tpi_ana_1np, 'k', label = "Model P = 1")
+    ax.plot(Ns_cols, tpi_serial, '-.k', label = "Measured P = 1")
+    ax.plot(Ns_cols, tpi_cols, label = "Measured: Column Partition")
+    ax.plot(Ns_cols, tpi_rows, label = "Measured: Row Partition")
 
     ax.set_ylabel('Total Time [s]')
     ax.set_xlabel('N [Cells]')
-    ax.set_title('Performance Model Analysis')
+    ax.set_title(f'1-D Decomposition Game of Life Performance Model Analysis, P = {Np}')
+    ax.grid()
+    ax.legend()
 
-    
+    fig.show()
 
 
     return 
@@ -198,7 +211,9 @@ if __name__ == '__main__':
     Please ensure that these parameters match those you set in ../src/main.f90
     """
     Nt = 40
-    pflag = 'rows'
+#    pflag = 'rows'
+    pflag = 'cols'
+#    pflag = 'serial'
     ## [The name of the input file.]
     Nxin_file = '../input/Nx_in.dat'
     Nyin_file = '../input/Ny_in.dat'
@@ -206,6 +221,9 @@ if __name__ == '__main__':
     out_file = '../output/time.dat'
 
     ## [These are performance model specific parameters.]
+    ## [This is taken from the latency study.]
+    ts = 2.996038421e-6
+    tw = 4.409597732e-10 
     ## [The number of processors to use.]
     Np = 2
     ## [The name of the file to save the time array into.]
@@ -215,7 +233,7 @@ if __name__ == '__main__':
         save_file = f'save_time_{pflag}_Np{Np}.p'
     ## [The array of messages sizes to loop over.]
     Ns = np.arange(100, 1000, 100)
-    ## [Set True to run mpi latency program.]
+    ## [Set True to run mpirun of main.exe]
     run = False
     ## [To load all 1D parallelizations, must run frist tho.]
     load1d = True
@@ -235,4 +253,5 @@ if __name__ == '__main__':
         Nstime_cols = pickle.load(open(f'save_time_cols_Np{Np}.p', 'rb'))
         Nstime_rows = pickle.load(open(f'save_time_rows_Np{Np}.p', 'rb'))
 
+        Model_1D_Performance(Nstime_cols, Nstime_rows, Nt, Np, ts, tw)
 

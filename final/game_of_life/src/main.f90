@@ -28,7 +28,7 @@ PROGRAM main
     character(len=15), parameter       :: Ny_infile = 'input/Ny_in.dat'
 !    integer, parameter                 :: Ny = 10
     ! [The number of time steps to take.]
-    integer, parameter                 :: Nt = 40
+    integer, parameter                 :: Nt = 80
     ! [The number of time steps between each gather and write.]
     integer, parameter                 :: Nw = 1
     ! [The parallelization flag, the options are, 
@@ -37,8 +37,8 @@ PROGRAM main
     !  'rows'   : Parallelizes the problem into rows paritions,
     !  'tile'   : Parallelizes the problem into rectangular tile partitions.]
 !    character(len=100), parameter      :: pflag = "serial"
-!    character(len=100), parameter      :: pflag = "cols"
-    character(len=100), parameter      :: pflag = "rows"
+    character(len=100), parameter      :: pflag = "cols"
+!    character(len=100), parameter      :: pflag = "rows"
     ! [The Initialization flag, the options are, 
     !  'rand'  : Initializes the domain to be randomly alive or dead, 
     !  'glide' : Initializes the domain to have glider formation in top left.]
@@ -46,8 +46,8 @@ PROGRAM main
     ! [The write out put flag, boolean, options are, 
     !  .TRUE.  : Life Matrix Output is written to desginated file.
     !  .FALSE. : Life Mat no written, reasons might be for timing studies.]
-!    logical, parameter                 :: woflag = .TRUE.
-    logical, parameter                 :: woflag = .FALSE.
+    logical, parameter                 :: woflag = .TRUE.
+!    logical, parameter                 :: woflag = .FALSE.
     ! [The header of the save file, format will be '{savefile_head}_{k}.dat'
     !  where k is the given time step for the save.]
     character(len=8), parameter        :: savefile_head = "life_out"

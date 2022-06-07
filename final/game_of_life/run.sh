@@ -2,5 +2,5 @@
 
 make clean 
 make 
-mpirun -np 2 main.exe
+mpirun -np 4 main.exe
 

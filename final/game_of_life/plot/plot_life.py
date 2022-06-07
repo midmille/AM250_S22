@@ -59,8 +59,7 @@ def Read_Output(Nx, Ny, Nt, Nw, savefile_head, outdir):
     ## [Make the array of time steps that were actually written, 
     ##  the Nt+Nw is because arange doesn't include the endpoint.]
     tstps = np.arange(0, Nt+Nw, Nw)
-    ## [Fortran is 1-indexed based.]
-    tstps[0] = 1
+
 
     ## [Init the 3-D array.]
     life_arr = np.zeros((Ny, Nx, len(tstps)))
@@ -96,21 +95,66 @@ def Plot_Life(Nx, Ny, life_array, tindx):
 
     return 
 
+def Plot_Glider_4x4(Nx, Ny, life_array, pflag): 
+    """
+    This plot a 4x4 subplot of the requested time steps for 
+    the glider game of life initialization.
+    """
 
-def Animate_Life(Nx, Ny, life_array, tstps):
+    ## [4 proces for the glider.]
+    ## [MAke sure the main.f90 has this.]
+    Np = 4
+    
+    if pflag == 'serial': 
+        method = 'Serial'
+    elif pflag == 'cols': 
+        method = 'Column Partition'
+    elif pflag == 'rows': 
+        method = 'Row Partition'
+
+    fig, axs = plt.subplots(ncols=2, nrows=2)
+    axsflt = axs.flatten()
+
+    tindxs = [0,20,40,80]
+
+    for k, ax in enumerate(axsflt): 
+
+        ax.imshow(life_array[:,:,tindxs[k]], extent=[0, Nx, 0, Ny], cmap='Blues')
+        ax.set_xticks(np.arange(0, Nx), [])
+        ax.set_xticklabels([])
+        ax.set_yticks(np.arange(0, Ny), [])
+        ax.set_yticklabels([])
+        ax.grid(True, c='black')
+        ax.set_title(f'{method} Glider Time Step: {tindxs[k]}')
+        
+
+    fig.show()
+
+    return 
+
+
+def Animate_Life(Nx, Ny, life_array, tstps, plfag):
     """
     This files animates every time step of life.
     """
-    frames = len(tstps)
 
     def animate(i): 
         ax.clear() 
         ax.imshow(life_array[:,:,i], extent=[0, Nx, 0, Ny], cmap='Blues')
-        ax.set_title(f't = {tstps[i]}')
+        ax.set_title(f'{method} Glider t = {tstps[i]}')
         ax.set_xticks(np.arange(0, Nx), [])
         ax.set_yticks(np.arange(0, Ny), [])
         ax.grid(True, c='black')
         return 
+
+    if pflag == 'serial': 
+        method = 'Serial'
+    elif pflag == 'cols': 
+        method = 'Column Partition'
+    elif pflag == 'rows': 
+        method = 'Row Partition'
+
+    frames = len(tstps)
 
     fig, ax = plt.subplots()
     
@@ -129,19 +173,22 @@ if __name__ == '__main__':
     Nt = 80
     Nw = 1
     ## [The parallelkization flag.]
-    pflag = 'serial'
+    pflag = 'rows'
     savefile_head = "life_out"
     ## [The out directory for the given parralleization.]
     if pflag == 'serial': 
         outdir = '../output/serial_out/'
     if pflag == 'cols':
         outdir = '../output/cols_out/'
+    if pflag == 'rows':
+        outdir = '../output/rows_out/'
 
     ## [Read the output.]
-    life_arr, tstps = Read_Output(Nx, Ny, Nt, Nw, savefile_head, outdir)
+    life_array, tstps = Read_Output(Nx, Ny, Nt, Nw, savefile_head, outdir)
 
     ## [Animate fig.]
-    Animate_Life(Nx, Ny, life_arr, tstps)
+    Animate_Life(Nx, Ny, life_array, tstps, pflag)
 
-
+    ## [The glider 4x4 plot.]
+#    Plot_Glider_4x4(Nx, Ny, life_array, pflag)
 

@@ -391,6 +391,28 @@ CONTAINS
         ! ROUTINE START
         ! =============
 
+        ! [Write the initialization of the game of life as step k=0]
+        IF (pid .EQ. master) THEN      
+            PRINT *, "A after time step:", k
+            PRINT *, "--------------------------------"
+            DO i=1,Ny
+                DO j=1,Nx
+                    WRITE(*,'(I2)', advance='no') A(i,j)
+                ENDDO
+                WRITE(*,*) ''
+            ENDDO
+        ENDIF 
+        ! [Write the result to file on master processor.]
+        IF (pid .EQ. master) THEN
+            ! [Write A_k.]
+            CALL Write_Life_Step(0,                      &
+            &                    Nx,                     &
+            &                    Ny,                     &
+            &                    A,                      &
+            &                    savefile_head,          &
+            &                    cols_outdir)
+        ENDIF 
+
         ! [First step is to partition the problem according to the domain size, 
         !  the number of processors, and the designmated decomposition.]
         CALL Partition_Rows(Nx, Np, Nys)
@@ -403,6 +425,8 @@ CONTAINS
         ! [Allocate the partitions of domain to the partition size.]
         CALL Init_Partition(Nxsp1, Nysp1, Asg)
 
+
+            
         ! [Create the rowtype for the matrix A for its gather and scatter
         !  operations.]
         CALL Create_Rowtype(Nx, Ny, Nxs, Nys, rowtype)
@@ -425,7 +449,6 @@ CONTAINS
 
         ! [Loop time.]
         DO k=1,Nt 
-            
 
             ! [Updated the ghost nodes on each partition. This includes the
             !  necessary ringed send and receives of the columns.]

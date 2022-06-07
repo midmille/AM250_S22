@@ -127,6 +127,21 @@ CONTAINS
             ! [Init center of Ag to be A.]
             Ag(1:Ny, 1:Nx) = A 
 
+            ! [Write the initial A, at k=.]
+            ! [If the write output flag is true.]
+            IF (woflag .EQ. .TRUE.) THEN 
+                ! [Write first step and the output every Nw time step.]
+                IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
+                    CALL Write_Life_Step(0,                      &
+                    &                    Nx,                     &
+                    &                    Ny,                     &
+                    &                    Ag(1:Ny,1:Nx),          &
+                    &                    savefile_head,          &
+                    &                    serial_outdir)
+                ENDIF 
+            ENDIF
+ 
+
             ! [Start the timer.]
             t1 = MPI_WTIME()
     
@@ -142,7 +157,7 @@ CONTAINS
                 ! [If the write output flag is true.]
                 IF (woflag .EQ. .TRUE.) THEN 
                     ! [Write first step and the output every Nw time step.]
-                    IF ((k .EQ. 1) .OR. (MOD(k,Nw) .EQ. 0)) THEN 
+                    IF  (MOD(k,Nw) .EQ. 0) THEN 
                         CALL Write_Life_Step(k,                      &
                         &                    Nx,                     &
                         &                    Ny,                     &
